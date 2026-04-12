@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VenueIQ — Smart Venue Experience System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon"></span>
+      <span class="logo-text">VenueIQ</span>
+    </div>
+
+    <div class="venue-badge">
+      <div class="live-pulse"></div>
+      <div>
+        <div class="venue-name">National Stadium</div>
+        <div class="venue-event">Champions Cup Final · Live</div>
+      </div>
+    </div>
+
+    <nav class="sidenav">
+      <a href="#" class="nav-item active" data-panel="crowd">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="13" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+          <path d="M1 17c0-3 2.7-5 6-5M19 17c0-3-2.7-5-6-5M7 12c0 3 1.3 5 3 5s3-2 3-5" stroke="currentColor"
+            stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        Crowd Flow
+      </a>
+      <a href="#" class="nav-item" data-panel="waits">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+          <path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        Wait Times
+      </a>
+      <a href="#" class="nav-item" data-panel="entry">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+          <path d="M7 10h6M10 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Entry Routing
+      </a>
+      <a href="#" class="nav-item" data-panel="app">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="6" y="2" width="8" height="16" rx="2" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="10" cy="15" r="1" fill="currentColor" />
+        </svg>
+        Fan App
+      </a>
+      <a href="#" class="nav-item" data-panel="alerts">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2a6 6 0 0 1 6 6c0 3.5 1.5 5 2 6H2c.5-1 2-2.5 2-6a6 6 0 0 1 6-6z" stroke="currentColor"
+            stroke-width="1.5" />
+          <path d="M8 14a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        Alerts
+        <span class="badge-count">5</span>
+      </a>
+      <a href="#" class="nav-item" data-panel="arch">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+          <rect x="12" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+          <rect x="7" y="12" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+          <path d="M5 8v2h10V8M10 10v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        Architecture
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="time-display" id="clock">19:34:22</div>
+      <div class="sidebar-footer-label">System time</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Crowd Flow</h1>
+        <span class="page-sub">Real-time density monitoring</span>
+      </div>
+      <div class="topbar-right">
+        <div class="stat-pill green">
+          <span class="dot"></span> 12 gates operational
+        </div>
+        <div class="stat-pill amber">
+          <span class="dot"></span> 78% capacity
+        </div>
+        <div class="stat-pill red">
+          <span class="dot"></span> 3 hotspots
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== PANELS ========== -->
+
+    <!-- CROWD FLOW -->
+    <section class="panel active" id="panel-crowd">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Capacity</div>
+          <div class="kpi-value amber">78%</div>
+          <div class="kpi-sub">58,450 / 75,000</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Arrivals / min</div>
+          <div class="kpi-value green">412</div>
+          <div class="kpi-sub">Peak flow</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Active hotspots</div>
+          <div class="kpi-value red">3</div>
+          <div class="kpi-sub">Above threshold</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg move speed</div>
+          <div class="kpi-value green">1.2 m/s</div>
+          <div class="kpi-sub">Normal range</div>
+        </div>
+      </div>
+
+      <div class="content-grid two-col">
+        <div class="card card-tall">
+          <div class="card-header">
+            <span class="card-title">Live Venue Heatmap</span>
+            <div class="ctrl-row">
+              <label class="ctrl-label">Density</label>
+              <input type="range" id="density-slider" min="0" max="100" value="78" />
+              <span class="ctrl-val" id="density-val">78%</span>
+            </div>
+          </div>
+          <div class="heatmap-wrap">
+            <svg id="heatmap-svg" viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg">
+              <!-- Outer venue ring -->
+              <ellipse cx="250" cy="140" rx="232" ry="122" fill="#0f1923" stroke="#1e3a5f" stroke-width="1.5" />
+              <!-- Inner concourse -->
+              <ellipse cx="250" cy="140" rx="188" ry="96" fill="#0a1520" stroke="#1e3a5f" stroke-width="1" />
+              <!-- Playing field -->
+              <ellipse cx="250" cy="140" rx="118" ry="68" fill="#0d2e14" stroke="#1a5c26" stroke-width="1" />
+              <ellipse cx="250" cy="140" rx="88" ry="50" fill="#0f3a18" stroke="#22692e" stroke-width="0.5" />
+              <circle cx="250" cy="140" r="18" fill="none" stroke="#22692e" stroke-width="0.7" />
+              <line x1="250" y1="92" x2="250" y2="188" stroke="#22692e" stroke-width="0.5" />
+              <!-- Crowd zone fills -->
+              <ellipse id="z-n" cx="250" cy="55" rx="72" ry="28" fill="#E24B4A" opacity="0.55" class="zone" />
+              <ellipse id="z-s" cx="250" cy="225" rx="72" ry="28" fill="#EF9F27" opacity="0.55" class="zone" />
+              <ellipse id="z-e" cx="432" cy="140" rx="28" ry="65" fill="#E24B4A" opacity="0.55" class="zone" />
+              <ellipse id="z-w" cx="68" cy="140" rx="28" ry="65" fill="#1D9E75" opacity="0.55" class="zone" />
+              <ellipse id="z-ne" cx="372" cy="72" rx="40" ry="30" fill="#1D9E75" opacity="0.5" class="zone" />
+              <ellipse id="z-nw" cx="128" cy="72" rx="40" ry="30" fill="#EF9F27" opacity="0.5" class="zone" />
+              <ellipse id="z-se" cx="372" cy="208" rx="40" ry="30" fill="#1D9E75" opacity="0.5" class="zone" />
+              <ellipse id="z-sw" cx="128" cy="208" rx="40" ry="30" fill="#1D9E75" opacity="0.5" class="zone" />
+              <!-- Gate labels -->
+              <text x="250" y="18" text-anchor="middle" font-size="9.5" fill="#E24B4A"
+                font-family="'DM Sans',sans-serif" font-weight="500" letter-spacing="0.06em">GATE N · HIGH</text>
+              <text x="250" y="266" text-anchor="middle" font-size="9.5" fill="#EF9F27"
+                font-family="'DM Sans',sans-serif" font-weight="500" letter-spacing="0.06em">GATE S · MED</text>
+              <text x="470" y="143" text-anchor="start" font-size="9.5" fill="#E24B4A"
+                font-family="'DM Sans',sans-serif" font-weight="500" letter-spacing="0.06em">E·HIGH</text>
+              <text x="30" y="143" text-anchor="end" font-size="9.5" fill="#1D9E75" font-family="'DM Sans',sans-serif"
+                font-weight="500" letter-spacing="0.06em">W·LOW</text>
+              <!-- Redirect path -->
+              <path d="M395 90 Q380 140 395 190" stroke="#1D9E75" stroke-width="1.5" fill="none"
+                stroke-dasharray="5 3" />
+              <polygon points="395,190 390,183 400,183" fill="#1D9E75" />
+              <!-- Field label -->
+              <text x="250" y="143" text-anchor="middle" font-size="11" fill="#2a7a36"
+                font-family="'DM Sans',sans-serif" font-weight="500">FIELD</text>
+            </svg>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="leg-dot" style="background:#E24B4A"></span> High density</div>
+            <div class="legend-item"><span class="leg-dot" style="background:#EF9F27"></span> Medium</div>
+            <div class="legend-item"><span class="leg-dot" style="background:#1D9E75"></span> Clear</div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Zone Summary</span></div>
+            <div class="zone-table">
+              <div class="zone-row">
+                <span class="zone-name">Gate N — North</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:92%;background:#E24B4A"></div>
+                </div>
+                <span class="zone-pct red">92%</span>
+              </div>
+              <div class="zone-row">
+                <span class="zone-name">Gate E — East</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:88%;background:#E24B4A"></div>
+                </div>
+                <span class="zone-pct red">88%</span>
+              </div>
+              <div class="zone-row">
+                <span class="zone-name">Gate S — South</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:65%;background:#EF9F27"></div>
+                </div>
+                <span class="zone-pct amber">65%</span>
+              </div>
+              <div class="zone-row">
+                <span class="zone-name">NW Corner</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:58%;background:#EF9F27"></div>
+                </div>
+                <span class="zone-pct amber">58%</span>
+              </div>
+              <div class="zone-row">
+                <span class="zone-name">Gate W — West</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:28%;background:#1D9E75"></div>
+                </div>
+                <span class="zone-pct green">28%</span>
+              </div>
+              <div class="zone-row">
+                <span class="zone-name">NE Corner</span>
+                <div class="mini-bar-bg">
+                  <div class="mini-bar" style="width:22%;background:#1D9E75"></div>
+                </div>
+                <span class="zone-pct green">22%</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Active Redirects</span></div>
+            <div class="redirect-list">
+              <div class="redirect-item">
+                <div class="redirect-from">Gate N</div>
+                <svg width="28" height="14" viewBox="0 0 28 14">
+                  <path d="M2 7h24M18 2l6 5-6 5" stroke="#1D9E75" stroke-width="1.5" fill="none" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                <div class="redirect-to">Gate W</div>
+                <div class="redirect-count">400 fans</div>
+              </div>
+              <div class="redirect-item">
+                <div class="redirect-from">Gate N</div>
+                <svg width="28" height="14" viewBox="0 0 28 14">
+                  <path d="M2 7h24M18 2l6 5-6 5" stroke="#1D9E75" stroke-width="1.5" fill="none" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                <div class="redirect-to">Gate NW</div>
+                <div class="redirect-count">120 fans</div>
+              </div>
+              <div class="redirect-item">
+                <div class="redirect-from">Gate E</div>
+                <svg width="28" height="14" viewBox="0 0 28 14">
+                  <path d="M2 7h24M18 2l6 5-6 5" stroke="#EF9F27" stroke-width="1.5" fill="none" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                <div class="redirect-to">Gate SE</div>
+                <div class="redirect-count">95 fans</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Arrival Trend</span></div>
+            <svg viewBox="0 0 280 90" width="100%">
+              <polyline points="0,70 40,65 80,55 120,40 160,30 200,42 240,38 280,45" fill="none" stroke="#1D9E75"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <polyline points="0,70 40,65 80,55 120,40 160,30 200,42 240,38 280,45 280,90 0,90Z" fill="#1D9E75"
+                fill-opacity="0.1" />
+              <line x1="160" y1="30" x2="160" y2="80" stroke="#E24B4A" stroke-width="1" stroke-dasharray="3 2" />
+              <text x="163" y="26" font-size="9" fill="#E24B4A" font-family="'DM Sans',sans-serif">Peak</text>
+              <text x="4" y="84" font-size="8" fill="#666" font-family="'DM Sans',sans-serif">−30m</text>
+              <text x="136" y="84" font-size="8" fill="#666" font-family="'DM Sans',sans-serif"
+                text-anchor="middle">Now</text>
+              <text x="276" y="84" font-size="8" fill="#666" font-family="'DM Sans',sans-serif"
+                text-anchor="end">+10m</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WAIT TIMES -->
+    <section class="panel" id="panel-waits">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Average wait</div>
+          <div class="kpi-value amber">8 min</div>
+          <div class="kpi-sub">Across all venues</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Longest queue</div>
+          <div class="kpi-value red">18 min</div>
+          <div class="kpi-sub">Concourse C3</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Mobile pre-orders</div>
+          <div class="kpi-value green">4,812</div>
+          <div class="kpi-sub">Placed this event</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Restrooms clear</div>
+          <div class="kpi-value green">86%</div>
+          <div class="kpi-sub">Low occupancy</div>
+        </div>
+      </div>
+
+      <div class="content-grid two-col">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Queue Wait Times</span>
+            <div class="tab-group">
+              <button class="tab active" data-cat="food">Food</button>
+              <button class="tab" data-cat="drinks">Drinks</button>
+              <button class="tab" data-cat="wc">Restrooms</button>
+            </div>
+          </div>
+          <div class="wait-list" id="wait-list"></div>
+        </div>
+
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Surge Prediction — Next 30 min</span></div>
+            <svg viewBox="0 0 300 110" width="100%">
+              <defs>
+                <linearGradient id="surge-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#EF9F27" stop-opacity="0.4" />
+                  <stop offset="100%" stop-color="#EF9F27" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0 80 Q40 75 70 82 Q100 88 120 50 Q140 20 160 28 Q180 35 210 70 Q240 85 270 75 Q285 70 300 74 L300 110 L0 110Z"
+                fill="url(#surge-grad)" />
+              <path d="M0 80 Q40 75 70 82 Q100 88 120 50 Q140 20 160 28 Q180 35 210 70 Q240 85 270 75 Q285 70 300 74"
+                fill="none" stroke="#EF9F27" stroke-width="2" stroke-linecap="round" />
+              <circle cx="160" cy="28" r="5" fill="#E24B4A" />
+              <text x="160" y="20" text-anchor="middle" font-size="9" fill="#E24B4A" font-family="'DM Sans',sans-serif"
+                font-weight="500">HALF-TIME PEAK</text>
+              <line x1="0" y1="108" x2="300" y2="108" stroke="#2a3545" stroke-width="0.5" />
+              <text x="4" y="108" font-size="8" fill="#666" font-family="'DM Sans',sans-serif">Now</text>
+              <text x="150" y="108" text-anchor="middle" font-size="8" fill="#666"
+                font-family="'DM Sans',sans-serif">+15 min</text>
+              <text x="296" y="108" text-anchor="end" font-size="8" fill="#666" font-family="'DM Sans',sans-serif">+30
+                min</text>
+            </svg>
+            <p class="card-note">ML surge model: half-time in ~12 min · 3 extra staff auto-dispatched to C3</p>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Express Lanes</span></div>
+            <div class="express-grid">
+              <div class="express-item open">
+                <div class="express-name">C1 — Express</div>
+                <div class="express-status">Open</div>
+                <div class="express-wait green">2 min</div>
+              </div>
+              <div class="express-item open">
+                <div class="express-name">B2 — Express</div>
+                <div class="express-status">Open</div>
+                <div class="express-wait green">4 min</div>
+              </div>
+              <div class="express-item opening">
+                <div class="express-name">C3 — Express</div>
+                <div class="express-status">Opening</div>
+                <div class="express-wait amber">Soon</div>
+              </div>
+              <div class="express-item closed">
+                <div class="express-name">A4 — Express</div>
+                <div class="express-status">Closed</div>
+                <div class="express-wait muted">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENTRY ROUTING -->
+    <section class="panel" id="panel-entry">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Gates open</div>
+          <div class="kpi-value green">12 / 12</div>
+          <div class="kpi-sub">All operational</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg entry wait</div>
+          <div class="kpi-value green">4 min</div>
+          <div class="kpi-sub">Across all gates</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Redirect nudges</div>
+          <div class="kpi-value">1,240</div>
+          <div class="kpi-sub">Sent via fan app</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Compliance rate</div>
+          <div class="kpi-value amber">62%</div>
+          <div class="kpi-sub">Of redirected fans</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Gate Status — Recommended Entry</span></div>
+        <div class="gate-grid">
+
+          <div class="gate-card status-red">
+            <div class="gate-badge red">AVOID</div>
+            <div class="gate-name">Gate N — North Stand</div>
+            <div class="gate-detail">Sector A1–A18 · 4 lanes active</div>
+            <div class="gate-wait-big red">18 min</div>
+            <div class="gate-note">Overflow from parking P1</div>
+            <div class="gate-lanes">
+              <div class="lane busy"></div>
+              <div class="lane busy"></div>
+              <div class="lane busy"></div>
+              <div class="lane busy"></div>
+            </div>
+          </div>
+
+          <div class="gate-card status-green recommended">
+            <div class="gate-badge green">RECOMMENDED</div>
+            <div class="gate-name">Gate W — West Wing</div>
+            <div class="gate-detail">Sector C1–C22 · 6 lanes active</div>
+            <div class="gate-wait-big green">2 min</div>
+            <div class="gate-note">Redirect beneficiary — high throughput</div>
+            <div class="gate-lanes">
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+            </div>
+          </div>
+
+          <div class="gate-card status-amber">
+            <div class="gate-badge amber">MODERATE</div>
+            <div class="gate-name">Gate S — South Stand</div>
+            <div class="gate-detail">Sector B1–B20 · 5 lanes (+2 opening)</div>
+            <div class="gate-wait-big amber">9 min</div>
+            <div class="gate-note">Extra lanes opening in ~3 min</div>
+            <div class="gate-lanes">
+              <div class="lane busy"></div>
+              <div class="lane busy"></div>
+              <div class="lane partial"></div>
+              <div class="lane free"></div>
+              <div class="lane free"></div>
+            </div>
+          </div>
+
+          <div class="gate-card status-amber">
+            <div class="gate-badge amber">MODERATE</div>
+            <div class="gate-name">Gate E — East Block</div>
+            <div class="gate-detail">Sector D1–D12 · 4 lanes active</div>
+            <div class="gate-wait-big amber">11 min</div>
+            <div class="gate-note">Accessible entry available (Lane 4)</div>
+            <div class="gate-lanes">
+              <div class="lane busy"></div>
+              <div class="lane busy"></div>
+              <div class="lane partial"></div>
+              <div class="lane free"></div>
+            </div>
+          </div>
+
+        </div>
+        <div class="card-note" style="margin-top:16px;">
+          Nudges distributed via fan app push notifications + 48 digital signs. Gate W capacity available: ~8,200 spots.
+        </div>
+      </div>
+    </section>
+
+    <!-- FAN APP -->
+    <section class="panel" id="panel-app">
+      <div class="content-grid app-grid">
+
+        <div class="phone-mockup-wrap">
+          <div class="phone-shell">
+            <div class="phone-notch"></div>
+            <div class="phone-inner">
+              <div class="app-header">
+                <div class="app-title">Match Day</div>
+                <div class="app-time" id="app-time">19:34</div>
+              </div>
+              <div class="score-bar">
+                <div>
+                  <div class="team-name">HOME</div>
+                  <div class="score">2</div>
+                </div>
+                <div class="vs-sep">
+                  <div class="minute" id="match-min">67'</div>
+                  <div class="vs">VS</div>
+                </div>
+                <div>
+                  <div class="team-name">AWAY</div>
+                  <div class="score">1</div>
+                </div>
+              </div>
+              <div class="app-section">
+                <div class="app-section-label">My entry</div>
+                <div class="app-card">
+                  <div class="app-row">
+                    <span class="app-row-label">Seat B14 · Row 7</span>
+                    <span class="pill-chip green">Gate W</span>
+                  </div>
+                  <div class="app-row-sub">~2 min wait · 380m walk</div>
+                  <div class="progress-mini">
+                    <div class="progress-fill" style="width:28%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="app-section">
+                <div class="app-section-label">Nearby concessions</div>
+                <div class="app-card">
+                  <div class="app-row">
+                    <span class="app-row-label">Kiosk C4 — Burgers</span>
+                    <span class="pill-chip green">3 min</span>
+                  </div>
+                </div>
+                <div class="app-card">
+                  <div class="app-row">
+                    <span class="app-row-label">Bar B2 — Drinks</span>
+                    <span class="pill-chip amber">9 min</span>
+                  </div>
+                </div>
+                <div class="app-card app-cta">
+                  <div class="app-row">
+                    <span class="app-row-label highlight">Pre-order to seat</span>
+                    <span class="pill-chip blue">New</span>
+                  </div>
+                </div>
+              </div>
+              <div class="app-section">
+                <div class="app-section-label">Restroom nearest</div>
+                <div class="app-card">
+                  <div class="app-row">
+                    <span class="app-row-label">Block B — Level 2</span>
+                    <span class="pill-chip green">Low</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Fan App Features</span></div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <div class="feature-icon green-icon">
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                    <path d="M8 2L2 6v8h4v-4h4v4h4V6L8 2z" stroke="#1D9E75" stroke-width="1.2"
+                      stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="feature-name">Smart routing</div>
+                  <div class="feature-desc">Personalised gate + concourse directions based on seat assignment and
+                    current crowd density</div>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon green-icon">
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                    <circle cx="8" cy="8" r="6" stroke="#1D9E75" stroke-width="1.2" />
+                    <path d="M8 5v3l2 1.5" stroke="#1D9E75" stroke-width="1.2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="feature-name">Live wait times</div>
+                  <div class="feature-desc">Real-time queue updates for food, drink and restrooms — updated every 15
+                    seconds</div>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon green-icon">
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                    <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#1D9E75" stroke-width="1.2" />
+                    <path d="M5 3V2M11 3V2M2 7h12" stroke="#1D9E75" stroke-width="1.2" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="feature-name">Pre-order to seat</div>
+                  <div class="feature-desc">Order food before half-time and collect at a dedicated express counter — no
+                    queue</div>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon green-icon">
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                    <path d="M8 2a4 4 0 0 0-4 4c0 3 4 8 4 8s4-5 4-8a4 4 0 0 0-4-4z" stroke="#1D9E75"
+                      stroke-width="1.2" />
+                    <circle cx="8" cy="6" r="1.5" stroke="#1D9E75" stroke-width="1.2" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="feature-name">Indoor AR wayfinding</div>
+                  <div class="feature-desc">Camera-based AR navigation guides fans to any destination within the venue
+                  </div>
+                </div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon green-icon">
+                  <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                    <path d="M8 2a3 3 0 0 1 3 3c0 2-1.5 3-2 4H7c-.5-1-2-2-2-4a3 3 0 0 1 3-3z" stroke="#1D9E75"
+                      stroke-width="1.2" />
+                    <path d="M6 9a2 2 0 0 0 4 0" stroke="#1D9E75" stroke-width="1.2" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="feature-name">Crowd nudges</div>
+                  <div class="feature-desc">Gentle push alerts suggest less-congested routes and concessions in real
+                    time</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="panel" id="panel-alerts">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Active alerts</div>
+          <div class="kpi-value red">5</div>
+          <div class="kpi-sub">Require action</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Staff deployed</div>
+          <div class="kpi-value green">312</div>
+          <div class="kpi-sub">On shift now</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Incidents</div>
+          <div class="kpi-value green">0</div>
+          <div class="kpi-sub">Last 60 minutes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Resolved today</div>
+          <div class="kpi-value">14</div>
+          <div class="kpi-sub">Auto + manual</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Live Operations Feed</span></div>
+        <div class="alert-feed" id="alert-feed">
+          <div class="alert-item high">
+            <div class="alert-severity-bar"></div>
+            <div class="alert-body">
+              <div class="alert-title">Gate N crowd density above 90%</div>
+              <div class="alert-desc">Redirect activated — 400 fans rerouted to Gate W via app push + signage update.
+              </div>
+              <div class="alert-meta"><span class="alert-time">19:31</span><span class="alert-tag red">High
+                  priority</span><span class="alert-tag muted">Auto-resolving</span></div>
+            </div>
+            <button class="alert-action">Resolve</button>
+          </div>
+          <div class="alert-item high">
+            <div class="alert-severity-bar"></div>
+            <div class="alert-body">
+              <div class="alert-title">Concourse C3 queue exceeds 18 min</div>
+              <div class="alert-desc">3 extra staff dispatched from reserve pool. Express lane C3 opening in ~3 min.
+              </div>
+              <div class="alert-meta"><span class="alert-time">19:29</span><span class="alert-tag red">High
+                  priority</span><span class="alert-tag amber">Staff en route</span></div>
+            </div>
+            <button class="alert-action">Resolve</button>
+          </div>
+          <div class="alert-item medium">
+            <div class="alert-severity-bar"></div>
+            <div class="alert-body">
+              <div class="alert-title">Half-time surge predicted in 12 min</div>
+              <div class="alert-desc">Pre-emptive kiosk staffing increased by 40%. Pre-order collection lanes being set
+                up.</div>
+              <div class="alert-meta"><span class="alert-time">19:34</span><span
+                  class="alert-tag amber">Medium</span><span class="alert-tag muted">Preventative</span></div>
+            </div>
+            <button class="alert-action">Dismiss</button>
+          </div>
+          <div class="alert-item medium">
+            <div class="alert-severity-bar"></div>
+            <div class="alert-body">
+              <div class="alert-title">East Stand accessible route blocked</div>
+              <div class="alert-desc">Maintenance team notified. Alternate accessible route signposted via digital
+                screens.</div>
+              <div class="alert-meta"><span class="alert-time">19:18</span><span
+                  class="alert-tag amber">Medium</span><span class="alert-tag muted">In progress</span></div>
+            </div>
+            <button class="alert-action">View</button>
+          </div>
+          <div class="alert-item low">
+            <div class="alert-severity-bar"></div>
+            <div class="alert-body">
+              <div class="alert-title">South car park P3 at 95% capacity</div>
+              <div class="alert-desc">Dynamic messaging updated on entry screens and in fan app. Redirect to P5 active.
+              </div>
+              <div class="alert-meta"><span class="alert-time">18:52</span><span class="alert-tag green">Low</span><span
+                  class="alert-tag muted">Auto-resolved</span></div>
+            </div>
+            <button class="alert-action">View</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section class="panel" id="panel-arch">
+      <div class="card" style="padding: 32px;">
+        <div class="card-header"><span class="card-title">System Architecture</span></div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-layer-label">Sensor Layer</div>
+            <div class="arch-nodes">
+              <div class="arch-node gray">Camera AI<span>Density + flow</span></div>
+              <div class="arch-node gray">RFID Tickets<span>Entry tracking</span></div>
+              <div class="arch-node gray">WiFi Probing<span>Anon position</span></div>
+              <div class="arch-node gray">IoT Sensors<span>Queues + WC</span></div>
+              <div class="arch-node gray">Wearables<span>Staff location</span></div>
+            </div>
+          </div>
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-line"></div>
+          </div>
+          <div class="arch-layer">
+            <div class="arch-layer-label">Data Platform</div>
+            <div class="arch-nodes single">
+              <div class="arch-node blue wide">Real-time Data Platform<span>Kafka streaming · Flink processing · Redis
+                  cache · InfluxDB time-series</span></div>
+            </div>
+          </div>
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-line blue"></div>
+          </div>
+          <div class="arch-layer">
+            <div class="arch-layer-label">Intelligence Engine</div>
+            <div class="arch-nodes three">
+              <div class="arch-node teal">Crowd Flow ML<span>Predict + reroute</span></div>
+              <div class="arch-node teal">Queue Predictor<span>Surge + staffing</span></div>
+              <div class="arch-node teal">Ops Engine<span>Dispatch + alerts</span></div>
+            </div>
+          </div>
+          <div class="arch-arrow-row">
+            <div class="arch-arrow-line teal"></div>
+          </div>
+          <div class="arch-layer">
+            <div class="arch-layer-label">Output Layer</div>
+            <div class="arch-nodes">
+              <div class="arch-node purple">Fan App<span>Routes + waits</span></div>
+              <div class="arch-node purple">Signage<span>Gate + directions</span></div>
+              <div class="arch-node purple">Ops Dashboard<span>Control room</span></div>
+              <div class="arch-node coral">Staff Dispatch<span>Auto + manual</span></div>
+              <div class="arch-node coral">Analytics<span>Post-event</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
