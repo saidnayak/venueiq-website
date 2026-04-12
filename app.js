@@ -262,7 +262,7 @@ function renderRingCharts() {
   container.innerHTML = RINGS_CONFIG.map((r, i) => `
     <div class="ring-chart">
       <div class="ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 84 84">
+        <svg class="ring-svg" viewBox="0 0 84 84" xmlns="http://www.w3.org/2000/svg">
           <circle class="ring-bg" cx="42" cy="42" r="36"/>
           <circle class="ring-arc" id="ring-${i}" cx="42" cy="42" r="36"
             stroke="${r.color}"
@@ -287,7 +287,7 @@ function renderRingCharts() {
       if (!el) return;
       el.style.transition = 'stroke-dashoffset 1.3s cubic-bezier(0.4,0,0.2,1)';
       const target = (RING_CIRC * (1 - r.value / r.max)).toFixed(1);
-      el.setAttribute('stroke-dashoffset', target);
+      el.style.strokeDashoffset = target;
     });
   }, 80);
 }
@@ -528,7 +528,7 @@ function renderAttendanceChart() {
   ).join('');
 
   container.innerHTML = `
-    <svg viewBox="0 0 ${SVG_W} ${SVG_H}" width="100%" style="height:140px;">
+    <svg viewBox="0 0 ${SVG_W} ${SVG_H}" width="100%" style="height:140px;" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="att-gr" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.5"/>
@@ -649,13 +649,13 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── Mobile Menu ─────────────────────────────────────────────────────────────
-const _menuBtn  = document.getElementById('menu-toggle');
+const _menuBtn = document.getElementById('menu-toggle');
 const _backdrop = document.getElementById('sidebar-backdrop');
 
-function openSidebar()  { document.body.classList.add('sidebar-open'); }
+function openSidebar() { document.body.classList.add('sidebar-open'); }
 function closeSidebar() { document.body.classList.remove('sidebar-open'); }
 
-if (_menuBtn)  _menuBtn.addEventListener('click', openSidebar);
+if (_menuBtn) _menuBtn.addEventListener('click', openSidebar);
 if (_backdrop) _backdrop.addEventListener('click', closeSidebar);
 
 // Auto-close sidebar on nav click (mobile)
@@ -675,4 +675,9 @@ setTimeout(() => {
   initHeatmapCanvas();
   updateNavPill();
   renderWaits('food');
+  renderRingCharts();
+  renderAttendanceChart();
+  renderEntryExitChart();
+  renderActionsSummary();
+  animateAnalyticsKPIs();
 }, 120);

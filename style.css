@@ -706,6 +706,9 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .heatmap-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -2113,7 +2116,8 @@ input[type="range"]::-moz-range-thumb {
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 200;
-    display: flex !important; /* override display:none */
+    display: flex !important;
+    /* override display:none */
   }
 
   body.sidebar-open .sidebar {

@@ -112,7 +112,9 @@
     <!-- TOPBAR -->
     <header class="topbar">
       <button class="menu-toggle" id="menu-toggle" aria-label="Open navigation">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
       </button>
       <div class="topbar-left">
         <h1 class="page-title" id="page-title">Crowd Flow</h1>
@@ -161,7 +163,7 @@
             </div>
           </div>
           <div class="heatmap-wrap" id="heatmap-wrap">
-            <canvas id="heatmap-canvas"></canvas>
+            <canvas id="heatmap-canvas" class="heatmap-canvas"></canvas>
           </div>
           <div class="legend">
             <div class="legend-item"><span class="leg-dot" style="background:#E24B4A"></span> High density</div>
@@ -261,7 +263,7 @@
                   <stop offset="100%" stop-color="#1D9E75" stop-opacity="0" />
                 </linearGradient>
               </defs>
-              <polyline points="0,70 40,65 80,55 120,40 160,30 200,42 240,38 280,45 280,82 0,82Z"
+              <polygon points="0,70 40,65 80,55 120,40 160,30 200,42 240,38 280,45 280,82 0,82"
                 fill="url(#arrival-grad)" />
               <polyline points="0,70 40,65 80,55 120,40 160,30 200,42 240,38 280,45" fill="none" stroke="#1D9E75"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
