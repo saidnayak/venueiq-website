@@ -146,8 +146,10 @@ function drawHeatmap() {
   if (!canvas || !canvas.isConnected) { hmAnimId = null; return; }
 
   const wrap = canvas.parentElement;
+  // Never render into a zero-sized canvas — retry next frame
   const W = wrap.clientWidth || 420;
-  const H = wrap.clientHeight || 240;
+  const H = Math.max(wrap.clientHeight || 0, 220);
+  if (W < 10 || H < 10) { hmAnimId = requestAnimationFrame(drawHeatmap); return; }
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
 
   const ctx = canvas.getContext('2d');
@@ -213,9 +215,25 @@ function drawHeatmap() {
 }
 
 function initHeatmapCanvas() {
-  if (hmAnimId) cancelAnimationFrame(hmAnimId);
+  if (hmAnimId) { cancelAnimationFrame(hmAnimId); hmAnimId = null; }
   hmPhase = 0;
-  drawHeatmap();
+  // Wait one frame so flex layout has resolved before reading clientWidth/Height
+  requestAnimationFrame(() => drawHeatmap());
+}
+
+// Re-init when the heatmap container is resized (handles window resize, font load, etc.)
+if (typeof ResizeObserver !== 'undefined') {
+  const _hmWrap = document.getElementById('heatmap-wrap');
+  if (_hmWrap) {
+    new ResizeObserver(() => {
+      const crowd = document.getElementById('panel-crowd');
+      if (crowd && crowd.classList.contains('active')) {
+        // Let the running loop pick up new dimensions naturally;
+        // if loop stopped, restart it
+        if (!hmAnimId) initHeatmapCanvas();
+      }
+    }).observe(_hmWrap);
+  }
 }
 
 const densitySlider = document.getElementById('density-slider');
@@ -246,9 +264,13 @@ function renderRingCharts() {
       <div class="ring-wrap">
         <svg class="ring-svg" viewBox="0 0 84 84">
           <circle class="ring-bg" cx="42" cy="42" r="36"/>
-          <circle class="ring-fill" id="ring-${i}" cx="42" cy="42" r="36"
+          <circle class="ring-arc" id="ring-${i}" cx="42" cy="42" r="36"
             stroke="${r.color}"
-            style="stroke-dasharray:${RING_CIRC.toFixed(1)};stroke-dashoffset:${RING_CIRC.toFixed(1)};"/>
+            fill="none"
+            stroke-width="9"
+            stroke-linecap="round"
+            stroke-dasharray="${RING_CIRC.toFixed(1)}"
+            stroke-dashoffset="${RING_CIRC.toFixed(1)}"/>
         </svg>
         <div class="ring-value-wrap">
           <span class="ring-value" style="color:${r.color}">${r.value}</span>
@@ -258,15 +280,16 @@ function renderRingCharts() {
       <div class="ring-label">${r.label}</div>
     </div>`).join('');
 
-  // Animate rings after two frames (ensures CSS transition is active)
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Delay so browser commits initial dashoffset=full before animating to target
+  setTimeout(() => {
     RINGS_CONFIG.forEach((r, i) => {
       const el = document.getElementById(`ring-${i}`);
       if (!el) return;
       el.style.transition = 'stroke-dashoffset 1.3s cubic-bezier(0.4,0,0.2,1)';
-      el.style.strokeDashoffset = (RING_CIRC * (1 - r.value / r.max)).toFixed(1);
+      const target = (RING_CIRC * (1 - r.value / r.max)).toFixed(1);
+      el.setAttribute('stroke-dashoffset', target);
     });
-  }));
+  }, 80);
 }
 
 // ─── Wait Times ───────────────────────────────────────────────────────────────
@@ -488,8 +511,14 @@ function renderAttendanceChart() {
   const maxCap = 75000;
   const pts = toPoints(hourly, maxCap);
   const line = pathStr(pts);
-  const area = line + ` L${pts.at(-1).x.toFixed(1)},${SVG_H - PB} L${pts[0].x.toFixed(1)},${SVG_H - PB} Z`;
-  const nowX = pts[6].x; // 20:00
+  // Build closed area polygon separately (no Z appended to the open line)
+  const areaPath = [
+    line,
+    `L${pts.at(-1).x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    `L${pts[0].x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    'Z'
+  ].join(' ');
+  const nowX = pts[5].x; // 19:30 — latest real data point
 
   const timeLbls = pts.filter((_, i) => i % 2 === 0).map(p =>
     `<text x="${p.x.toFixed(1)}" y="${SVG_H - PB + 13}" text-anchor="middle" font-size="9" fill="rgba(110,144,174,0.7)" font-family="DM Sans,sans-serif">${p.t}</text>`
@@ -507,7 +536,7 @@ function renderAttendanceChart() {
         </linearGradient>
       </defs>
       ${gridSVG(maxCap)}
-      <path d="${area}" fill="url(#att-gr)"/>
+      <path d="${areaPath}" fill="url(#att-gr)"/>
       <path d="${line}" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       ${dots}
       ${timeLbls}
@@ -532,8 +561,18 @@ function renderEntryExitChart() {
   const xPts = toPoints(exitD, maxV);
   const eLine = pathStr(ePts);
   const xLine = pathStr(xPts);
-  const eArea = eLine + ` L${ePts.at(-1).x.toFixed(1)},${SVG_H - PB} L${ePts[0].x.toFixed(1)},${SVG_H - PB} Z`;
-  const xArea = xLine + ` L${xPts.at(-1).x.toFixed(1)},${SVG_H - PB} L${xPts[0].x.toFixed(1)},${SVG_H - PB} Z`;
+  const eArea = [
+    eLine,
+    `L${ePts.at(-1).x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    `L${ePts[0].x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    'Z'
+  ].join(' ');
+  const xArea = [
+    xLine,
+    `L${xPts.at(-1).x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    `L${xPts[0].x.toFixed(1)},${(SVG_H - PB).toFixed(1)}`,
+    'Z'
+  ].join(' ');
 
   const timeLbls = ePts.filter((_, i) => i % 3 === 0).map(p =>
     `<text x="${p.x.toFixed(1)}" y="${SVG_H - PB + 13}" text-anchor="middle" font-size="9" fill="rgba(110,144,174,0.7)" font-family="DM Sans,sans-serif">${p.t}</text>`
@@ -607,6 +646,28 @@ document.addEventListener('keydown', e => {
   if (!id) return;
   const item = document.querySelector(`.nav-item[data-panel="${id}"]`);
   if (item) item.click();
+});
+
+// ─── Mobile Menu ─────────────────────────────────────────────────────────────
+const _menuBtn  = document.getElementById('menu-toggle');
+const _backdrop = document.getElementById('sidebar-backdrop');
+
+function openSidebar()  { document.body.classList.add('sidebar-open'); }
+function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+
+if (_menuBtn)  _menuBtn.addEventListener('click', openSidebar);
+if (_backdrop) _backdrop.addEventListener('click', closeSidebar);
+
+// Auto-close sidebar on nav click (mobile)
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (window.innerWidth <= 720) closeSidebar();
+  });
+});
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSidebar();
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────

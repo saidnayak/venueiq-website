@@ -17,6 +17,9 @@
 
 <body>
 
+  <!-- Mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
@@ -108,6 +111,9 @@
 
     <!-- TOPBAR -->
     <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Open navigation">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
       <div class="topbar-left">
         <h1 class="page-title" id="page-title">Crowd Flow</h1>
         <span class="page-sub">Real-time density monitoring</span>
@@ -145,7 +151,7 @@
       </div>
 
       <div class="content-grid two-col">
-        <div class="card card-tall">
+        <div class="card card-tall" style="min-height:380px;">
           <div class="card-header">
             <span class="card-title">Live Venue Heatmap</span>
             <div class="ctrl-row">
