@@ -1,11 +1,50 @@
-/* ===== VenueIQ — app.js v2 ===== */
+/* ===== VenueIQ — app.js v3 ===== */
 'use strict';
 
+// ─── Named Constants ──────────────────────────────────────────────────────────
+/** Default counter animation duration (ms) */
+const COUNTER_DURATION_MS = 950;
+/** Debounce delay for the heatmap ResizeObserver (ms) */
+const RESIZE_DEBOUNCE_MS = 100;
+/** Interval between wait-time drift updates (ms) */
+const WAIT_DRIFT_INTERVAL_MS = 4200;
+/** Interval between fan-app push notifications (ms) */
+const NOTIF_INTERVAL_MS = 10000;
+/** Interval between simulated incoming alert injections (ms) */
+const ALERT_INTERVAL_MS = 18000;
+
+// ─── Security Helpers ─────────────────────────────────────────────────────────
+/**
+ * Strips HTML from a string — returns only the text content with all tags removed.
+ * Uses DOMParser so tags are fully parsed and stripped, not just escaped.
+ * Use before inserting any dynamic content into the DOM to prevent XSS.
+ * @param {string} str - Potentially unsafe input
+ * @returns {string} Safe plain-text string with all HTML tags removed
+ */
+function sanitise(str) {
+  try {
+    const doc = new DOMParser().parseFromString(String(str), 'text/html');
+    return doc.body.textContent || '';
+  } catch (_) {
+    // Fallback for environments without DOMParser
+    return String(str).replace(/<[^>]*>/g, '');
+  }
+}
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
+/** @param {string} sel @param {ParentNode} [ctx] */
 function $(sel, ctx = document) { return ctx.querySelector(sel); }
+/** @param {string} sel @param {ParentNode} [ctx] */
 function $$(sel, ctx = document) { return [...ctx.querySelectorAll(sel)]; }
 
-function animateCounter(el, target, duration = 950, format = v => v.toLocaleString()) {
+/**
+ * Animates a numeric counter in a DOM element from 0 to target.
+ * @param {HTMLElement|null} el - The element whose text will be updated
+ * @param {number} target       - The final numeric value to reach
+ * @param {number} [duration]   - Animation duration in ms
+ * @param {function} [format]   - Optional formatter for the displayed value
+ */
+function animateCounter(el, target, duration = COUNTER_DURATION_MS, format = v => v.toLocaleString()) {
   if (!el) return;
   const start = performance.now();
   function tick(now) {
@@ -18,6 +57,7 @@ function animateCounter(el, target, duration = 950, format = v => v.toLocaleStri
 }
 
 // ─── Panel Navigation ─────────────────────────────────────────────────────────
+/** @type {Object.<string,{title:string,sub:string}>} Per-panel title and subtitle metadata */
 const panelMeta = {
   crowd: { title: 'Crowd Flow', sub: 'Real-time density monitoring' },
   waits: { title: 'Wait Times', sub: 'Concession & restroom queues' },
@@ -26,6 +66,7 @@ const panelMeta = {
   alerts: { title: 'Live Alerts', sub: 'Operations feed & incident log' },
   arch: { title: 'Architecture', sub: 'System design & data layers' },
   analytics: { title: 'Analytics', sub: 'Event insights & performance KPIs' },
+  map: { title: 'Live Map', sub: 'Venue overview & gate locations' },
 };
 
 $$('.nav-item').forEach(item => {
@@ -33,8 +74,12 @@ $$('.nav-item').forEach(item => {
     e.preventDefault();
     const id = item.dataset.panel;
     if (!id) return;
-    $$('.nav-item').forEach(n => n.classList.remove('active'));
+    $$('.nav-item').forEach(n => {
+      n.classList.remove('active');
+      n.removeAttribute('aria-current');
+    });
     item.classList.add('active');
+    item.setAttribute('aria-current', 'page');
     switchPanel(id);
     updateNavPill();
   });
@@ -68,7 +113,18 @@ function switchPanel(id) {
     crowd: () => initHeatmapCanvas(),
     waits: () => { renderRingCharts(); renderWaits(activeWaitCat); },
     entry: () => renderGateSparklines(),
-    analytics: () => { renderAttendanceChart(); renderEntryExitChart(); renderActionsSummary(); animateAnalyticsKPIs(); },
+    analytics: () => {
+      renderAttendanceChart();
+      renderEntryExitChart();
+      // Defer non-critical renders to idle time for better Efficiency
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => { renderActionsSummary(); animateAnalyticsKPIs(); });
+      } else {
+        renderActionsSummary();
+        animateAnalyticsKPIs();
+      }
+    },
+    map: () => { if (googleMap) google.maps.event.trigger(googleMap, 'resize'); },
   };
   if (callbacks[id]) callbacks[id]();
 }
@@ -225,13 +281,19 @@ function initHeatmapCanvas() {
 if (typeof ResizeObserver !== 'undefined') {
   const _hmWrap = document.getElementById('heatmap-wrap');
   if (_hmWrap) {
+    /** @type {number|null} Debounce handle for resize callbacks */
+    let _resizeDebounce = null;
     new ResizeObserver(() => {
-      const crowd = document.getElementById('panel-crowd');
-      if (crowd && crowd.classList.contains('active')) {
-        // Let the running loop pick up new dimensions naturally;
-        // if loop stopped, restart it
-        if (!hmAnimId) initHeatmapCanvas();
-      }
+      // Debounce to prevent thrashing the canvas on every pixel change
+      clearTimeout(_resizeDebounce);
+      _resizeDebounce = setTimeout(() => {
+        const crowd = document.getElementById('panel-crowd');
+        if (crowd && crowd.classList.contains('active')) {
+          // Let the running loop pick up new dimensions naturally;
+          // if loop stopped, restart it
+          if (!hmAnimId) initHeatmapCanvas();
+        }
+      }, RESIZE_DEBOUNCE_MS);
     }).observe(_hmWrap);
   }
 }
@@ -320,27 +382,54 @@ function waitColor(w, m) {
   const p = w / m;
   return p >= 0.75 ? '#E24B4A' : p >= 0.45 ? '#EF9F27' : '#1D9E75';
 }
+/**
+ * Renders the wait-time list for the given category using safe DOM construction.
+ * @param {string} cat - One of 'food' | 'drinks' | 'wc'
+ */
 function renderWaits(cat) {
   const list = document.getElementById('wait-list');
   if (!list) return;
-  list.innerHTML = waitsData[cat].map(item => {
+  list.innerHTML = '';
+  waitsData[cat].forEach(item => {
     const pct = Math.min(100, Math.round((item.wait / item.max) * 100));
     const color = waitColor(item.wait, item.max);
     const label = item.wait === 0 ? 'Free' : item.wait.toFixed(0) + ' min';
-    return `
-      <div class="wait-item">
-        <div class="wait-label">${item.label}</div>
-        <div class="wait-bar-bg"><div class="wait-bar" style="width:${pct}%;background:${color};"></div></div>
-        <div class="wait-time" style="color:${color}">${label}</div>
-      </div>`;
-  }).join('');
+
+    const row = document.createElement('div');
+    row.className = 'wait-item';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'wait-label';
+    lbl.textContent = sanitise(item.label);
+
+    const barBg = document.createElement('div');
+    barBg.className = 'wait-bar-bg';
+    const bar = document.createElement('div');
+    bar.className = 'wait-bar';
+    bar.style.cssText = `width:${pct}%;background:${color};`;
+    barBg.appendChild(bar);
+
+    const time = document.createElement('div');
+    time.className = 'wait-time';
+    time.style.color = color;
+    time.textContent = label;
+
+    row.appendChild(lbl);
+    row.appendChild(barBg);
+    row.appendChild(time);
+    list.appendChild(row);
+  });
 }
 
 document.addEventListener('click', e => {
   const tab = e.target.closest('.tab');
   if (!tab || !tab.dataset.cat) return;
-  $$('.tab').forEach(t => t.classList.remove('active'));
+  $$('.tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
   tab.classList.add('active');
+  tab.setAttribute('aria-selected', 'true');
   activeWaitCat = tab.dataset.cat;
   renderWaits(activeWaitCat);
 });
@@ -456,27 +545,60 @@ setInterval(() => {
   const a = incomingAlerts[incomingIdx++];
   const now = new Date();
   const ts = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  // Build alert via safe DOM construction — no innerHTML with dynamic data
   const el = document.createElement('div');
   el.className = `alert-item ${a.sev}`;
   el.style.cssText = 'opacity:0;transform:translateY(-10px)';
-  el.innerHTML = `
-    <div class="alert-severity-bar"></div>
-    <div class="alert-body">
-      <div class="alert-title">${a.title}</div>
-      <div class="alert-desc">${a.desc}</div>
-      <div class="alert-meta">
-        <span class="alert-time">${ts}</span>
-        <span class="alert-tag ${a.tagCls}">${a.tag}</span>
-      </div>
-    </div>
-    <button class="alert-action">Dismiss</button>`;
+
+  const severityBar = document.createElement('div');
+  severityBar.className = 'alert-severity-bar';
+
+  const body = document.createElement('div');
+  body.className = 'alert-body';
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'alert-title';
+  titleEl.textContent = sanitise(a.title);
+
+  const descEl = document.createElement('div');
+  descEl.className = 'alert-desc';
+  descEl.textContent = sanitise(a.desc);
+
+  const metaEl = document.createElement('div');
+  metaEl.className = 'alert-meta';
+
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'alert-time';
+  timeSpan.textContent = ts;
+
+  const tagSpan = document.createElement('span');
+  tagSpan.className = `alert-tag ${a.tagCls}`;
+  tagSpan.textContent = sanitise(a.tag);
+
+  metaEl.appendChild(timeSpan);
+  metaEl.appendChild(tagSpan);
+  body.appendChild(titleEl);
+  body.appendChild(descEl);
+  body.appendChild(metaEl);
+
+  const btn = document.createElement('button');
+  btn.className = 'alert-action';
+  btn.textContent = 'Dismiss';
+  btn.setAttribute('aria-label', `Dismiss: ${sanitise(a.title)}`);
+
+  el.appendChild(severityBar);
+  el.appendChild(body);
+  el.appendChild(btn);
   feed.prepend(el);
+
   requestAnimationFrame(() => {
     el.style.transition = 'opacity 0.38s, transform 0.38s';
-    el.style.opacity = '1'; el.style.transform = 'none';
+    el.style.opacity = '1';
+    el.style.transform = 'none';
   });
   updateBadge();
-}, 18000);
+}, ALERT_INTERVAL_MS);
 
 // ─── Analytics Charts ─────────────────────────────────────────────────────────
 const SVG_W = 680, SVG_H = 140, PL = 46, PR = 14, PT = 10, PB = 28;
@@ -638,10 +760,24 @@ function animateAnalyticsKPIs() {
   animateCounter(document.getElementById('kpi-nps'), 74, 800, v => v.toString());
 }
 
-// ─── Keyboard Shortcuts (1–7) ────────────────────────────────────────────────
-const keyMap = { '1': 'crowd', '2': 'waits', '3': 'entry', '4': 'app', '5': 'alerts', '6': 'arch', '7': 'analytics' };
+// ─── Keyboard Shortcuts ─────────────────────────────────────────────────────
+/** Keys 1–8 switch panels · Ctrl+Shift+T runs tests · Escape closes mobile sidebar */
+const keyMap = { '1': 'crowd', '2': 'waits', '3': 'entry', '4': 'app', '5': 'alerts', '6': 'arch', '7': 'analytics', '8': 'map' };
+
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // Ctrl+Shift+T — run in-browser test suite
+  if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+    e.preventDefault();
+    if (typeof VenueIQTests !== 'undefined') {
+      const res = VenueIQTests.run();
+      VenueIQTests.renderOverlay(res);
+    }
+    return;
+  }
+  // Escape — close mobile sidebar
+  if (e.key === 'Escape') { closeSidebar(); return; }
+  // 1–8 — switch panel
   const id = keyMap[e.key];
   if (!id) return;
   const item = document.querySelector(`.nav-item[data-panel="${id}"]`);
@@ -652,7 +788,9 @@ document.addEventListener('keydown', e => {
 const _menuBtn = document.getElementById('menu-toggle');
 const _backdrop = document.getElementById('sidebar-backdrop');
 
+/** Opens the mobile sidebar overlay */
 function openSidebar() { document.body.classList.add('sidebar-open'); }
+/** Closes the mobile sidebar overlay */
 function closeSidebar() { document.body.classList.remove('sidebar-open'); }
 
 if (_menuBtn) _menuBtn.addEventListener('click', openSidebar);
@@ -665,19 +803,126 @@ $$('.nav-item').forEach(item => {
   });
 });
 
-// Close on Escape key
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeSidebar();
-});
+// ─── Google Maps Integration ─────────────────────────────────────────────────
+/** Wembley Stadium coordinates (stand-in for National Stadium) */
+const VENUE_COORDS = { lat: 51.5560, lng: -0.2796 };
+
+/** Custom dark map style matching the VenueIQ colour palette */
+const MAP_DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#060b12' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#060b12' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#6e90ae' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#1b3a5e' }] },
+  { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#9da5b3' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#09131d' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1b3a5e' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#122638' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#030b14' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#35526a' }] },
+];
+
+/** Gate marker data with coordinates and current wait-time status */
+const GATE_MARKERS_DATA = [
+  { id: 'north', label: 'Gate N — North Stand', lat: 51.5570, lng: -0.2796, wait: 18, status: 'red' },
+  { id: 'south', label: 'Gate S — South Stand', lat: 51.5549, lng: -0.2796, wait: 9, status: 'amber' },
+  { id: 'east', label: 'Gate E — East Block', lat: 51.5560, lng: -0.2775, wait: 11, status: 'amber' },
+  { id: 'west', label: 'Gate W — West Wing', lat: 51.5560, lng: -0.2818, wait: 2, status: 'green' },
+];
+
+/** @type {google.maps.Map|null} Singleton Google Map instance */
+let googleMap = null;
+
+/**
+ * Initialises a dark-themed Google Map centered on the venue.
+ * Called automatically by the Maps JS API as its async callback.
+ * Adds colour-coded markers for each gate with clickable info windows.
+ */
+function initGoogleMap() {
+  const container = document.getElementById('google-map');
+  if (!container) return;
+
+  googleMap = new google.maps.Map(container, {
+    center: VENUE_COORDS,
+    zoom: 16,
+    styles: MAP_DARK_STYLE,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    gestureHandling: 'cooperative',
+  });
+
+  const STATUS_COLORS = { red: '#E24B4A', amber: '#EF9F27', green: '#1D9E75' };
+  const STATUS_LABELS = { red: '⚠ Avoid', amber: '~ Moderate', green: '✓ Recommended' };
+
+  GATE_MARKERS_DATA.forEach(gate => {
+    const color = STATUS_COLORS[gate.status] || '#6e90ae';
+
+    // Use AdvancedMarkerElement with PinElement (modern, non-deprecated API)
+    let marker;
+    try {
+      const { AdvancedMarkerElement, PinElement } = google.maps.marker;
+      const pin = new PinElement({
+        background: color,
+        borderColor: '#ffffff',
+        glyphColor: '#ffffff',
+        scale: 1.2,
+      });
+      marker = new AdvancedMarkerElement({
+        position: { lat: gate.lat, lng: gate.lng },
+        map: googleMap,
+        title: gate.label,
+        content: pin.element,
+      });
+    } catch (_) {
+      // Fallback to legacy Marker if AdvancedMarkerElement is not available
+      marker = new google.maps.Marker({
+        position: { lat: gate.lat, lng: gate.lng },
+        map: googleMap,
+        title: gate.label,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 13,
+          fillColor: color,
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+        animation: google.maps.Animation.DROP,
+      });
+    }
+
+    // Build info-window content with safe DOM construction
+    const wrap = document.createElement('div');
+    wrap.style.cssText = "background:#09131d;color:#e4edf7;padding:10px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;min-width:150px;border:0.5px solid rgba(255,255,255,0.1);";
+    const h = document.createElement('div');
+    h.style.cssText = 'font-weight:600;font-size:13px;margin-bottom:4px;';
+    h.textContent = gate.label;
+    const w = document.createElement('div');
+    w.style.cssText = `font-size:12px;color:${color};font-weight:700;`;
+    w.textContent = gate.wait + ' min wait';
+    const s = document.createElement('div');
+    s.style.cssText = 'font-size:11px;color:#6e90ae;margin-top:4px;';
+    s.textContent = STATUS_LABELS[gate.status];
+    wrap.appendChild(h); wrap.appendChild(w); wrap.appendChild(s);
+
+    const info = new google.maps.InfoWindow({ content: wrap });
+    // Use 'gmp-click' for AdvancedMarkerElement, fall back to 'click' for legacy Marker
+    const evtName = (marker.constructor && marker.constructor.name === 'AdvancedMarkerElement')
+      ? 'gmp-click' : 'click';
+    marker.addListener(evtName, () => info.open(googleMap, marker));
+  });
+}
+// Expose as window property so the Maps API async callback can find it
+window.initGoogleMap = initGoogleMap;
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+// Analytics and map are lazy-loaded via panel callbacks — skipped here.
 setTimeout(() => {
   initHeatmapCanvas();
   updateNavPill();
   renderWaits('food');
   renderRingCharts();
-  renderAttendanceChart();
-  renderEntryExitChart();
-  renderActionsSummary();
-  animateAnalyticsKPIs();
 }, 120);

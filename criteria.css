@@ -1,0 +1,231 @@
+/* ===== VenueIQ — criteria.css (AI Code Analysis Enhancements) ===== */
+/* Covers: Accessibility, Efficiency, Testing overlay, and colour fallbacks  */
+
+/* ─── Skip Navigation Link ──────────────────────────────────────────────────
+   Visually hidden until focused via keyboard — first thing read by screen readers */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  background: var(--accent-green);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+  white-space: nowrap;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ─── Focus-Visible Rings ───────────────────────────────────────────────────
+   Ensure every interactive element shows a clearly visible focus ring          */
+:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.alert-action:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 3px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────────────
+   Disable all animations for users who prefer reduced motion (Accessibility)   */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  body::before {
+    animation: none;
+  }
+
+  .live-pulse,
+  .stat-pill .dot {
+    animation: none;
+  }
+
+  .badge-count.bump {
+    animation: none;
+  }
+
+  .panel.active>* {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─── Performance Hints (Efficiency) ───────────────────────────────────────
+   will-change only on elements with known transforms / position animations     */
+.nav-pill {
+  will-change: top;
+}
+
+.kpi-card {
+  will-change: transform;
+}
+
+.gate-card {
+  will-change: transform;
+}
+
+/* Isolate each panel's layout to prevent unnecessary reflows              */
+.panel {
+  contain: layout style;
+}
+
+/* ─── Google Maps Container ─────────────────────────────────────────────────
+   Fixed height with matching dark background while the map tiles load         */
+#google-map {
+  height: 420px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  background: #030b14;
+}
+
+/* Override Maps UI chrome to fit dark theme */
+#google-map .gm-style-iw-d {
+  overflow: hidden !important;
+}
+
+#google-map .gm-style-iw {
+  background: #09131d !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  padding: 0 !important;
+}
+
+#google-map .gm-style-iw-tc::after {
+  background: #09131d !important;
+}
+
+#google-map .gm-ui-hover-effect>span {
+  background-color: #6e90ae !important;
+}
+
+/* ─── Test Results Overlay (Testing) ────────────────────────────────────────
+   Bottom-right panel that appears when Ctrl+Shift+T is pressed               */
+.test-overlay {
+  position: fixed;
+  inset: auto 24px 24px auto;
+  z-index: 9000;
+  background: rgba(6, 11, 18, 0.97);
+  border: 0.5px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  min-width: 340px;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 0.5px rgba(29, 158, 117, 0.25);
+}
+
+.test-header {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid var(--border);
+  letter-spacing: 0.02em;
+}
+
+.test-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.test-pass {
+  font-size: 12px;
+  color: var(--accent-green);
+  line-height: 1.4;
+}
+
+.test-fail {
+  font-size: 12px;
+  color: var(--accent-red);
+  line-height: 1.4;
+}
+
+.test-close-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.test-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* ─── KPI colour fallbacks (Code Quality) ──────────────────────────────────
+   Fallback colour for browsers that don't support -webkit-text-fill-color     */
+.kpi-value.blue {
+  background: linear-gradient(130deg, var(--accent-blue), #60aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: var(--accent-blue);
+  /* fallback */
+}
+
+.kpi-value.purple {
+  background: linear-gradient(130deg, var(--accent-purple), #a79ef7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: var(--accent-purple);
+  /* fallback */
+}
